@@ -11,11 +11,11 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return send_from_directory('.', 'math_tutor.html')
+    return send_from_directory('/app', 'math_tutor.html')
 
 @app.route('/<path:path>')
 def static_files(path):
-    return send_from_directory('.', path)
+    return send_from_directory('/app', path)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
