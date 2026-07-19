@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高一数学 · 教师面板</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:#f8fafc;color:#1e293b;min-height:100vh;display:flex;flex-direction:column
+}
+.login-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;
+  background:#0f172a;
+  background-image:linear-gradient(135deg,#0f172a,#1e293b,#334155);
+  display:flex;align-items:center;justify-content:center
+}
+.login-box{
+  background:#fff;border-radius:16px;padding:28px 32px 24px;
+  width:380px;max-width:92vw;
+  box-shadow:0 20px 60px rgba(0,0,0,.4)
+}
+.login-logo{font-size:40px;text-align:center;margin-bottom:4px}
+.login-title{font-size:18px;font-weight:800;color:#0f172a;text-align:center;letter-spacing:-.3px}
+.login-field{margin-bottom:14px}
+.login-label{font-size:12px;color:#64748b;margin-bottom:4px;font-weight:500}
+.login-field input{
+  width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:10px;
+  font-size:14px;outline:none;box-sizing:border-box;transition:border-color .15s
+}
+.login-field input:focus{border-color:#4f46e5}
+.login-btn{
+  width:100%;padding:10px 0;border:none;border-radius:10px;
+  background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;
+  font-size:14px;font-weight:700;cursor:pointer;text-align:center;
+  margin-top:4px;transition:transform .1s;letter-spacing:.3px
+}
+.login-btn:hover{transform:translateY(-1px)}
+.login-btn:active{transform:translateY(0)}
+.login-error{font-size:12px;color:#ef4444;text-align:center;margin-top:6px;display:none}
+.header{
+  background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;
+  padding:.6rem 1.2rem;display:flex;align-items:center;justify-content:space-between
+}
+.header h1{font-size:1rem;font-weight:700;letter-spacing:-.3px}
+.header .sub{font-size:.72rem;color:#94a3b8}
+
+.layout{max-width:900px;margin:0 auto;padding:1.2rem;width:100%;flex:1}
+
+/* Teacher panel */
+.tch-summary{display:flex;gap:1.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.tch-card{background:#fff;border-radius:10px;padding:.55rem 1rem;text-align:center;min-width:80px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.tch-card .num{font-size:1.25rem;font-weight:700;color:#4f46e5}
+.tch-card .label{font-size:.7rem;color:#94a3b8}
+.tch-tabs{display:flex;gap:0;margin-bottom:1rem}
+.tch-tab{font-size:.82rem;padding:6px 14px;border:1px solid #e2e8f0;background:#fff;color:#475569;cursor:pointer;transition:all .15s}
+.tch-tab:first-child{border-radius:8px 0 0 8px}
+.tch-tab:last-child{border-radius:0 8px 8px 0}
+.tch-tab.active{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.tch-tab:not(.active):hover{background:#f1f5f9}
+.panel-card{background:#fff;border-radius:12px;padding:1rem 1.2rem;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.tch-student-list{list-style:none}
+.tch-student-list li{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.45rem .6rem;border-bottom:1px solid #f1f5f9;font-size:.85rem
+}
+.tch-student-list li:hover{background:#f8fafc}
+.tch-student-list .sname{font-weight:600}
+.tch-student-list .sinfo{color:#64748b;font-size:.78rem}
+.tch-student-list button{padding:.2rem .6rem;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:.73rem;cursor:pointer;transition:all .15s}
+.tch-student-list button:hover{background:#eef2ff;border-color:#4f46e5}
+.tch-empty{text-align:center;padding:2rem;color:#94a3b8;font-size:.82rem}
+.rec-actions{display:flex;gap:.5rem;margin-bottom:.8rem}
+.rec-actions button{padding:.3rem .7rem;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:.76rem;cursor:pointer;color:#475569;transition:all .15s}
+.rec-actions button:hover{background:#f1f5f9;border-color:#94a3b8}
+.rec-actions .danger{color:#ef4444;border-color:#fecaca}
+.rec-actions .danger:hover{background:#fef2f2}
+.btn-push{padding:.2rem .6rem;border:1px solid #f59e0b;border-radius:8px;background:#fffbeb;color:#d97706;font-size:.73rem;cursor:pointer}
+.btn-push:hover{background:#fef3c7;border-color:#d97706}
+
+/* Compose form */
+.cp-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.6rem}
+.cp-row label{font-size:.78rem;color:#64748b;display:flex;align-items:center;gap:3px}
+.cp-row label input[type=number]{width:35px;padding:.1rem;border:1px solid #e2e8f0;border-radius:4px;text-align:center;font-size:.75rem}
+.cp-row select{width:100%;padding:.35rem;border:2px solid #e2e8f0;border-radius:6px;font-size:.82rem}
+.cp-actions{display:flex;gap:.5rem;margin-bottom:.6rem;flex-wrap:wrap}
+.cp-actions button{padding:.4rem 1rem;border-radius:6px;cursor:pointer;font-size:.85rem}
+.cp-actions .primary{border:none;background:#4f46e5;color:#fff;font-weight:600}
+.cp-actions .secondary{border:1px solid #e2e8f0;background:#fff;color:#475569}
+.cp-actions .push{border:none;background:#059669;color:#fff;font-weight:600}
+.cp-result{display:none;background:#f8fafc;border-radius:8px;padding:.8rem;font-size:.82rem;line-height:1.6;max-height:40vh;overflow-y:auto}
+
+/* Settings modal */
+.chat-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2000;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.2);display:none}
+.chat-modal.open{display:block}
+.chat-modal .chat-head{display:flex;justify-content:space-between;align-items:center;padding:.8rem 1.2rem;border-radius:16px 16px 0 0}
+.chat-modal .chat-head h4{font-size:.9rem;font-weight:700;color:#fff}
+
+/* Toast */
+.toast-container{position:fixed;bottom:1rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:.4rem}
+.toast{padding:.5rem .9rem;border-radius:10px;font-size:.8rem;font-weight:500;background:#1e293b;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.15);animation:slideIn .2s}
+.toast.success{background:#059669}
+.toast.error{background:#ef4444}
+.toast.info{background:#4f46e5}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@media(max-width:600px){
+  body{font-size:14px}
+  .header{padding:.5rem .8rem;flex-wrap:wrap;gap:6px}
+  .header h1{font-size:.85rem}
+  .header .sub{font-size:.65rem}
+  .layout{padding:.6rem;max-width:100%}
+  .tch-summary{gap:.6rem}
+  .tch-card{padding:.4rem .6rem;min-width:60px;flex:1}
+  .tch-card .num{font-size:1rem}
+  .panel-card{padding:.6rem}
+  .tch-student-list li{flex-wrap:wrap;gap:6px;padding:.35rem .4rem;font-size:.8rem}
+  .tch-student-list li>div:first-child{width:100%}
+  .tch-student-list li>div:last-child{width:100%;display:flex;gap:4px;flex-wrap:wrap}
+  .tch-student-list button{font-size:.68rem;padding:.15rem .45rem}
+  .rec-actions{flex-wrap:wrap}
+  .rec-actions button{font-size:.7rem;padding:.25rem .5rem}
+  .cp-row label{font-size:.7rem}
+  .cp-actions{flex-wrap:wrap}
+  .cp-actions button{flex:1;min-width:80px;font-size:.75rem;padding:.3rem .5rem}
+  .login-box{padding:16px;max-width:96vw}
+  .chat-modal{width:90vw!important;max-width:90vw}
+  .btn-push{font-size:.68rem;padding:.15rem .45rem}
+  .tch-tabs{flex-wrap:wrap}
+  .tch-tab{font-size:.75rem;padding:4px 10px}
+}
+</style>
+</head>
+<body>
+
+<!-- Login Overlay -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo">👨‍🏫</div>
+    <div class="login-title">教师面板</div>
+    <div style="font-size:12px;color:#94a3b8;text-align:center;margin-top:4px;">请输入教师密码</div>
+    <div class="login-divider" style="height:1px;background:#f1f5f9;margin:14px 0"></div>
+    <div class="login-field">
+      <div class="login-label">教师密码</div>
+      <input type="password" id="teacherPass" placeholder="输入教师密码">
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">进入教师面板</button>
+    <div style="margin-top:8px;padding-top:8px;border-top:1px solid #f1f5f9;text-align:center;">
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <div style="text-align:center;"><div id="qrS" style="margin:0 auto;"></div><div style="font-size:10px;color:#64748b;margin-top:4px;">👤 学生微信扫码</div></div>
+        <div style="text-align:center;"><div id="qrT" style="margin:0 auto;"></div><div style="font-size:10px;color:#64748b;margin-top:4px;">👨‍🏫 教师微信扫码</div></div>
+      </div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:6px;word-break:break-all;" id="netInfo"></div>
+    </div>
+  </div>
+</div>
+<script>
+function genQr(){
+  try{
+    var href=window.location.href,base=href.split('?')[0].replace(/\/+$/,'');
+    var baseDir=base.substring(0,base.lastIndexOf('/')+1);
+    var info=document.getElementById('netInfo');
+    if(href.indexOf('http://')===0||href.indexOf('https://')===0){
+      if(typeof QRCode!=='undefined'){
+        setTimeout(function(){
+          new QRCode(document.getElementById('qrS'),{text:baseDir+'math_tutor.html',width:130,height:130,correctLevel:QRCode.CorrectLevel.H});
+          new QRCode(document.getElementById('qrT'),{text:base,width:130,height:130,correctLevel:QRCode.CorrectLevel.H});
+        },200);
+      }
+      info.innerHTML='📱 手机扫码访问<br><strong style="color:#4f46e5;font-size:13px;">'+base+'</strong>';
+    } else {
+      info.innerHTML='💡 双击 start_server.bat 启动服务器后，手机连接同一 WiFi 扫码访问';
+    }
+  }catch(e){}
+}
+setTimeout(genQr,300);
+</script>
+
+<!-- Header -->
+<div class="header">
+  <div>
+    <h1>👨‍🏫 高一数学 · 教师面板</h1>
+    <div class="sub">学生管理 · 组卷 · 个性化推送</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <button onclick="openSettings()" style="background:none;border:none;color:#fff;font-size:1.1rem;cursor:pointer;padding:2px 6px;" title="API设置与密码修改">🔑</button>
+    <button onclick="window.close()" style="background:none;border:none;color:#94a3b8;font-size:1rem;cursor:pointer;padding:2px 6px;" title="关闭">✕</button>
+  </div>
+</div>
+
+<!-- Main Layout -->
+<div class="layout" id="mainLayout" style="display:none;">
+  <div class="tch-summary">
+    <div class="tch-card"><div class="num" id="tchStudents">0</div><div class="label">学生数</div></div>
+    <div class="tch-card"><div class="num" id="tchTotal">0</div><div class="label">总题数</div></div>
+    <div class="tch-card"><div class="num" id="tchRate">-</div><div class="label">平均正确率</div></div>
+  </div>
+
+  <div class="tch-tabs">
+    <button class="tch-tab active" data-tab="students">📋 学生管理</button>
+    <button class="tch-tab" data-tab="compose">📝 组卷 & 推送</button>
+  </div>
+
+  <!-- Tab: 学生管理 -->
+  <div class="panel-card" id="tabStudents">
+    <div class="rec-actions">
+      <button onclick="exportAll()">📥 导出全部</button>
+      <button class="danger" onclick="clearAllRecords()">🗑 清空所有记录</button>
+    </div>
+    <h4 style="font-size:.85rem;color:#475569;margin:.5rem 0 .3rem;">学生列表（点击"推送"分析薄弱点并生成针对性练习）</h4>
+    <ul class="tch-student-list" id="tchStudentList"></ul>
+    <div id="tchEmpty" class="tch-empty">暂无学生数据</div>
+  </div>
+
+  <!-- Tab: 组卷 & 推送 -->
+  <div class="panel-card" id="tabCompose" style="display:none;">
+    <p style="font-size:.85rem;color:#475569;margin-bottom:.6rem;">选择知识点、题型和分数，自动生成并推送试卷。</p>
+    <div class="cp-row">
+      <div style="flex:2;min-width:150px;">
+        <label style="display:block;margin-bottom:2px;">选题知识点</label>
+        <select id="cpKp"><option value="">（全部知识点）</option></select>
+      </div>
+    </div>
+    <div class="cp-row">
+      <label style="flex-wrap:wrap;"><input type="checkbox" id="cpSingle" checked> 单选题 <input type="number" id="cpScoreSingle" value="5" min="1" max="20" style="width:35px;"> 分 <input type="number" id="cpCountSingle" value="3" min="0" max="20" style="width:35px;"> 题</label>
+      <label style="flex-wrap:wrap;"><input type="checkbox" id="cpMulti" checked> 多选题 <input type="number" id="cpScoreMulti" value="5" min="1" max="20" style="width:35px;"> 分 <input type="number" id="cpCountMulti" value="2" min="0" max="20" style="width:35px;"> 题</label>
+      <label style="flex-wrap:wrap;"><input type="checkbox" id="cpFill" checked> 填空题 <input type="number" id="cpScoreFill" value="5" min="1" max="20" style="width:35px;"> 分 <input type="number" id="cpCountFill" value="3" min="0" max="20" style="width:35px;"> 题</label>
+      <label style="flex-wrap:wrap;"><input type="checkbox" id="cpSolve"> 解答题 <input type="number" id="cpScoreSolve" value="10" min="1" max="20" style="width:35px;"> 分 <input type="number" id="cpCountSolve" value="2" min="0" max="20" style="width:35px;"> 题</label>
+    </div>
+    <div class="cp-actions">
+      <button class="primary" onclick="generatePaper()">📄 生成试卷</button>
+      <button class="secondary" onclick="exportPaper()">📥 导出试卷</button>
+      <button class="push" onclick="pushToAll()">📤 推送给所有学生</button>
+    </div>
+    <div id="cpStudentSelect" style="display:none;margin-bottom:.6rem;padding:.5rem;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+      <div style="font-size:.78rem;color:#475569;margin-bottom:.4rem;font-weight:600;">选择推送对象：</div>
+      <div id="cpStudentList" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+      <button class="push" onclick="pushToSelected()" style="margin-top:.4rem;padding:.3rem .8rem;border:none;border-radius:6px;background:#059669;color:#fff;font-weight:600;cursor:pointer;font-size:.78rem;">📤 推送给选中的学生</button>
+    </div>
+    <div class="cp-result" id="cpResult"></div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="chat-modal" id="settingsModal" style="height:auto;width:400px;">
+  <div class="chat-head" style="background:#4f46e5;">
+    <h4>⚙ 系统设置</h4>
+    <button onclick="closeSettings()" style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;">✕</button>
+  </div>
+  <div style="padding:1rem 1.25rem;">
+    <p style="font-size:.82rem;color:#64748b;margin-bottom:.5rem;line-height:1.5;">填写文心一言 API Key 启用 AI 出题、深度批改和问答功能。</p>
+    <input type="password" id="apiKeyInput" style="width:100%;padding:.5rem .7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;outline:none;box-sizing:border-box;" placeholder="粘贴 Bearer Token（bce-v3/ALTAK-xxx/xxx）...">
+    <button onclick="saveApiKey()" style="width:100%;margin-top:.5rem;padding:.45rem;border:none;border-radius:8px;background:#4f46e5;color:#fff;font-weight:600;cursor:pointer;font-size:.85rem;">保存 API Key</button>
+    <hr style="border:none;border-top:1px solid #f1f5f9;margin:.8rem 0;">
+    <p style="font-size:.82rem;color:#64748b;margin-bottom:.3rem;">教师密码管理</p>
+    <div style="display:flex;gap:.5rem;">
+      <input type="password" id="teacherPwInput" style="flex:1;padding:.45rem .7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;outline:none;box-sizing:border-box;" placeholder="新教师密码">
+      <button onclick="changePw()" style="padding:.45rem .7rem;border:none;border-radius:8px;background:#7c3aed;color:#fff;font-weight:600;cursor:pointer;font-size:.85rem;">修改</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+
+function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function sample(arr,n){const c=[...arr];for(let i=c.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[c[i],c[j]]=[c[j],c[i]]}return c.slice(0,n)}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
+function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
+function formatSet(s){return '{'+[...s].sort((a,b)=>a-b).join(',')+'}'}
+function norm(s){return s.replace(/\s+/g,'').replace(/[\uFF01-\uFF5E]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))}
+function isNumEq(a,b){const x=parseFloat(a),y=parseFloat(b);return!isNaN(x)&&!isNaN(y)&&Math.abs(x-y)<1e-9}
+function isSetEq(s,a){const r=/-?\d+/g,x=(s.match(r)||[]).map(Number).sort((a,b)=>a-b),y=(a.match(r)||[]).map(Number).sort((a,b)=>a-b);return x.length>0&&x.length===y.length&&x.every((v,i)=>v===y[i])}
+function isIntervalEq(s,a){const r=/[-∞\d.]+/g,x=(s.match(r)||[]).map(v=>v==='∞'?'Infinity':v).join(','),y=(a.match(r)||[]).map(v=>v==='∞'?'Infinity':v).join(',');if(!x||!y)return false;const bs=s.replace(/[^()\[\]]/g,''),ba=a.replace(/[^()\[\]]/g,'');return x===y&&bs===ba}
+
+function getUsers(){try{return JSON.parse(localStorage.getItem('math_users')||'{}')}catch{return{}}}
+function saveUsers(u){localStorage.setItem('math_users',JSON.stringify(u))}
+function getCurrentUser(){try{return JSON.parse(localStorage.getItem('math_current_user')||'null')}catch{return null}}
+function setCurrentUser(u){if(u)localStorage.setItem('math_current_user',JSON.stringify(u));else localStorage.removeItem('math_current_user')}
+function getTeacherPw(){return localStorage.getItem('math_teacher_pw')||'admin123'}
+function setTeacherPw(pw){localStorage.setItem('math_teacher_pw',pw)}
+function getApiKey(){return localStorage.getItem('wenxinApiKey')||''}
+function setApiKey(key){
+  localStorage.setItem('wenxinApiKey',key);
+}
+function registerUser(name){var u=getUsers();if(u[name])return false;u[name]='';saveUsers(u);return true}
+
+function toast(msg,type){
+  const c=document.getElementById('toastContainer'),t=document.createElement('div');
+  t.className='toast '+(type||'');t.textContent=msg;c.appendChild(t);
+  setTimeout(function(){t.remove()},3000);
+}
+
+function exportCSV(records,label){
+  if(!records||!records.length){toast('暂无记录','info');return}
+  var csv='时间,知识点,题目,你的答案,正确答案,是否正确,得分\n'+
+    records.map(function(r){return '"'+(r.t||'')+'","'+(r.kp||'')+'","'+((r.q||'').replace(/"/g,'""'))+'","'+((r.a||'').replace(/"/g,'""'))+'","'+(r.ca||'')+'","'+(r.ok?'是':'否')+'","'+(r.score||0)+'"'}).join('\n');
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='高一数学_教师导出_'+(label||'')+'_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(a);
+  toast('已导出 CSV','success');
+}
+
+function openSettings(){
+  document.getElementById('settingsModal').classList.add('open');
+  document.getElementById('apiKeyInput').value=getApiKey();
+}
+function closeSettings(){document.getElementById('settingsModal').classList.remove('open')}
+function saveApiKey(){
+  var k=document.getElementById('apiKeyInput').value.trim();
+  if(!k){toast('请输入 API Key','error');return}
+  setApiKey(k);closeSettings();
+  toast('API Key 已保存','success');
+}
+function changePw(){
+  var pw=document.getElementById('teacherPwInput').value.trim();
+  if(!pw||pw.length<4){toast('密码至少 4 位','error');return}
+  setTeacherPw(pw);document.getElementById('teacherPwInput').value='';toast('教师密码已更新','success');
+}
+
+function doLogin(){
+  var pass=document.getElementById('teacherPass').value.trim();
+  if(!loginTeacher(pass)){document.getElementById('loginError').textContent='密码错误';document.getElementById('loginError').style.display='block';return}
+  document.getElementById('loginOverlay').style.display='none';
+  document.getElementById('mainLayout').style.display='block';
+  initPanel();
+}
+function loginTeacher(pass){return pass===getTeacherPw()}
+
+function initPanel(){
+  renderTeacherPanel();
+  var sel=document.getElementById('cpKp');
+  sel.innerHTML='<option value="">（全部知识点）</option>'+ALL_KPS.map(function(k){return '<option value="'+k+'">'+k+'</option>'}).join('');
+  document.querySelectorAll('.tch-tab').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.tch-tab').forEach(function(x){x.classList.remove('active')});
+      b.classList.add('active');
+      document.getElementById('tabStudents').style.display=b.dataset.tab==='students'?'':'none';
+      document.getElementById('tabCompose').style.display=b.dataset.tab==='compose'?'':'none';
+    });
+  });
+}
+
+function renderTeacherPanel(){
+  var allRecords;
+  try{allRecords=JSON.parse(localStorage.getItem('mathRecords')||'[]')}catch{allRecords=[]}
+  var students={};
+  allRecords.forEach(function(r){var n=r.student||'unknown';if(!students[n])students[n]={total:0,correct:0};students[n].total++;if(r.ok)students[n].correct++});
+  var sn=Object.keys(students),ta=allRecords.length,ca=allRecords.filter(function(r){return r.ok}).length;
+  document.getElementById('tchStudents').textContent=sn.length;
+  document.getElementById('tchTotal').textContent=ta;
+  document.getElementById('tchRate').textContent=ta?Math.round(ca/ta*100)+'%':'-';
+  var list=document.getElementById('tchStudentList');list.innerHTML='';
+  if(!sn.length){document.getElementById('tchEmpty').style.display='block';return}
+  document.getElementById('tchEmpty').style.display='none';
+  sn.forEach(function(name){
+    var s=students[name],li=document.createElement('li');
+    var rate=s.total?Math.round(s.correct/s.total*100)+'%':'-';
+    li.innerHTML='<div><span class="sname">👤 '+name+'</span><span class="sinfo"> &nbsp;'+s.total+' 题 · 正确率 '+rate+'</span></div>'+
+      '<div style="display:flex;gap:4px;flex-wrap:wrap;"><button onclick="window.open(\'wrong_records.html?student='+name+'\',\'_blank\')">📊 错题</button><button onclick="viewStudent(\''+name+'\')">📥 CSV</button><button class="btn-push" onclick="pushPractice(\''+name+'\')">🎯 推送</button></div>';
+    list.appendChild(li);
+  });
+}
+
+function viewStudent(name){
+  var rs;try{rs=JSON.parse(localStorage.getItem('records_'+name)||'[]')}catch{rs=[]}
+  if(!rs.length){toast(name+' 暂无记录','info');return}
+  var msg='👤 '+name+' — '+rs.length+' 题, 正确 '+rs.filter(function(r){return r.ok}).length+' 题';
+  toast(msg,'info');exportCSV(rs,name);
+}
+
+function pushPractice(studentName){
+  var rs;try{rs=JSON.parse(localStorage.getItem('records_'+studentName)||'[]')}catch{rs=[]}
+  if(!rs.length){toast(studentName+' 暂无做题记录','info');return}
+  var ks={};rs.forEach(function(r){if(!ks[r.kp])ks[r.kp]={total:0,correct:0};ks[r.kp].total++;if(r.ok)ks[r.kp].correct++});
+  var wk=Object.keys(ks).filter(function(k){var s=ks[k];return s.total<3||s.correct/s.total<0.7}).sort(function(a,b){return ks[a].correct/ks[a].total-ks[b].correct/ks[b].total});
+  if(!wk.length)wk=Object.keys(ks).sort(function(a,b){return ks[a].total-ks[b].total}).slice(0,3);
+  if(!wk.length){toast(studentName+' 暂无薄弱知识点','info');return}
+  wk=wk.slice(0,3);var qs=[];
+  wk.forEach(function(k){if(KB[k]){for(var i=0;i<5;i++){var q=KB[k]();q._kp=k;qs.push(q)}}});
+  for(var i=qs.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=qs[i];qs[i]=qs[j];qs[j]=t}
+  qs=qs.slice(0,10);
+  if(!qs.length){toast('无法生成练习','error');return}
+  var examData={questions:qs,scores:{single:5,multi:5,fill:5,solve:10},totalScore:qs.reduce(function(s,q){return s+(q.t==='solve'?10:5)},0),generated:new Date().toISOString()};
+  localStorage.setItem('exam_'+studentName,JSON.stringify(examData));
+  var wl=wk.map(function(k){var s=ks[k];return k+'（正确率 '+Math.round(s.correct/s.total*100)+'%，共 '+s.total+' 题）'}).join('；');
+  toast('已为 '+studentName+' 推送 '+qs.length+' 道针对性练习（薄弱点：'+wl+'）','success');
+}
+
+function exportAll(){
+  var all;try{all=JSON.parse(localStorage.getItem('mathRecords')||'[]')}catch{all=[]}
+  exportCSV(all,'all');
+}
+
+function clearAllRecords(){
+  if(!confirm('确定要清空所有学生记录吗？此操作不可撤销。'))return;
+  localStorage.removeItem('mathRecords');
+  Object.keys(localStorage).filter(function(k){return k.startsWith('records_')}).forEach(function(k){localStorage.removeItem(k)});
+  renderTeacherPanel();toast('所有记录已清空','info');
+}
+
+function generatePaper(){
+  var kp=document.getElementById('cpKp').value;
+  var countMap={single:parseInt(document.getElementById('cpCountSingle').value)||0,multi:parseInt(document.getElementById('cpCountMulti').value)||0,fill:parseInt(document.getElementById('cpCountFill').value)||0,solve:parseInt(document.getElementById('cpCountSolve').value)||0};
+  var types=[];var totalNeeded=0;
+  if(document.getElementById('cpSingle').checked&&countMap.single>0){types.push('single');totalNeeded+=countMap.single}
+  if(document.getElementById('cpMulti').checked&&countMap.multi>0){types.push('multi');totalNeeded+=countMap.multi}
+  if(document.getElementById('cpFill').checked&&countMap.fill>0){types.push('fill');totalNeeded+=countMap.fill}
+  if(document.getElementById('cpSolve').checked&&countMap.solve>0){types.push('solve');totalNeeded+=countMap.solve}
+  if(!types.length||totalNeeded<1){toast('请勾选题型并设置数量 >0','error');return}
+  var qs=[],kps=kp?[kp]:ALL_KPS;
+  var got={single:0,multi:0,fill:0,solve:0};
+  kps.forEach(function(k){if(KB[k]){for(var i=0;i<200;i++){var q=KB[k]();if(got[q.t]!==undefined&&got[q.t]<countMap[q.t]){q._kp=k;qs.push(q);got[q.t]++;if(qs.length>=totalNeeded)break}}}});
+  if(!qs.length){toast('无匹配题目','error');return}
+  for(var i=qs.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=qs[i];qs[i]=qs[j];qs[j]=t}
+  var scoreMap={single:parseInt(document.getElementById('cpScoreSingle').value)||5,multi:parseInt(document.getElementById('cpScoreMulti').value)||5,fill:parseInt(document.getElementById('cpScoreFill').value)||5,solve:parseInt(document.getElementById('cpScoreSolve').value)||10};
+  var totalScore=qs.reduce(function(s,q){return s+(scoreMap[q.t]||5)},0);
+  var h='<div style="margin-bottom:.5rem;font-weight:700;font-size:.95rem;">📄 高一数学试卷</div><div style="font-size:.78rem;color:#64748b;margin-bottom:.8rem;">共 '+qs.length+' 题 · 满分 '+totalScore+' 分</div>';
+  function tn2(t){var names={single:'单选题',multi:'多选题',fill:'填空题',solve:'解答题'};return names[t]||t}
+  var ct='';
+  qs.forEach(function(q,i){if(q.t!==ct){ct=q.t;h+='<div style="font-weight:600;margin:.6rem 0 .3rem;color:#4f46e5;">'+tn2(q.t)+'（每题'+scoreMap[q.t]+'分，共'+got[q.t]+'题）</div>'}h+='<div style="margin-bottom:.4rem;padding:.3rem 0;border-bottom:1px dashed #e2e8f0;"><span style="color:#94a3b8;margin-right:4px;">'+(i+1)+'.</span> '+q.q+(q.opts?'<br><span style="font-size:.78rem;">'+q.opts.join('&nbsp;&nbsp;')+'</span>':'')+'</div>'});
+  h+='<div style="margin-top:.8rem;padding-top:.5rem;border-top:2px solid #e2e8f0;"><span style="font-weight:600;color:#059669;">参考答案</span></div>';
+  qs.forEach(function(q,i){h+='<div style="font-size:.78rem;padding:.15rem 0;">'+(i+1)+'. '+q.a+(q.e?' — '+q.e:'')+'</div>'});
+  var r=document.getElementById('cpResult');r.innerHTML=h;r.style.display='block';toast('试卷已生成，共 '+qs.length+' 题，满分 '+totalScore+' 分','success');
+  window._lastExam={questions:qs,scores:scoreMap,totalScore:totalScore,generated:new Date().toISOString()};
+  showStudentSelector();
+}
+function showStudentSelector(){
+  var selDiv=document.getElementById('cpStudentSelect');
+  var listDiv=document.getElementById('cpStudentList');
+  listDiv.innerHTML='';
+  var count=0;
+  for(var key in localStorage){
+    if(key.startsWith('records_')&&key!=='records_teacher'){
+      var name=key.slice(8);
+      count++;
+      var label=document.createElement('label');
+      label.style.cssText='display:flex;align-items:center;gap:3px;padding:3px 8px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;font-size:.78rem;';
+      label.innerHTML='<input type="checkbox" class="cp-stu-cb" value="'+name+'" checked> '+name;
+      listDiv.appendChild(label);
+    }
+  }
+  if(!count){selDiv.style.display='none';return}
+  selDiv.style.display='block';
+}
+function pushToSelected(){
+  if(!window._lastExam||!window._lastExam.questions||!window._lastExam.questions.length){toast('请先生成试卷','error');return}
+  var exam=window._lastExam,selected=[],cbs=document.querySelectorAll('.cp-stu-cb:checked');
+  cbs.forEach(function(cb){selected.push(cb.value)});
+  if(!selected.length){toast('请至少选择一个学生','error');return}
+  selected.forEach(function(name){localStorage.setItem('exam_'+name,JSON.stringify(exam))});
+  toast('已推送给 '+selected.length+' 名学生: '+selected.join(', '),'success');
+}
+
+function exportPaper(){
+  var r=document.getElementById('cpResult');if(!r.style.display||r.style.display==='none'){toast('请先生成试卷','error');return}
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+r.textContent],{type:'text/plain;charset=utf-8'}));a.download='高一数学试卷_'+new Date().toISOString().slice(0,10)+'.txt';a.click();toast('试卷已导出','success');
+}
+
+function pushToAll(){
+  if(!window._lastExam||!window._lastExam.questions||!window._lastExam.questions.length){toast('请先生成试卷','error');return}
+  var exam=window._lastExam,pushed=0,firstName='';
+  for(var key in localStorage){
+    if(key.startsWith('records_')&&key!=='records_teacher'){
+      var name=key.slice(8);localStorage.setItem('exam_'+name,JSON.stringify(exam));pushed++;
+      if(!firstName)firstName=name;
+    }
+  }
+  if(!pushed){toast('暂无学生','info');return}
+  toast('已推送给 '+pushed+' 名学生','success');
+}
+
+document.getElementById('teacherPass')?.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin()});
+
+const KB={};
+
+KB['集合的基本运算'] = function() {
+  if(Math.random()<.2)return pick([
+    {t:'single',q:'已知 A={1,2}，B={2,3}，则 A∪B = ?',opts:['A. {2}','B. {1,2,3}','C. {1,3}','D. {1,2,2,3}'],a:'B',e:'A∪B 取所有属于 A 或 B 的元素，{1,2}∪{2,3}={1,2,3}'},
+    {t:'single',q:'已知 A={1,2}，B={2,3}，则 A∩B = ?',opts:['A. {2}','B. {1,2,3}','C. {1,3}','D. ∅'],a:'A',e:'A∩B 取既属于 A 又属于 B 的元素，只有 2'},
+    {t:'single',q:'设 U={1,2,3,4,5}，A={1,3}，则 ∁ᵤA = ?',opts:['A. {2,4,5}','B. {1,3}','C. {2,4}','D. {1,2,3,4,5}'],a:'A',e:'补集是全集中不属于 A 的元素组成的集合，即 {2,4,5}'},
+    {t:'single',q:'设 A={x|x<3}，B={x|x>1}，则 A∩B = ?',opts:['A. {x|1<x<3}','B. {x|x<3}','C. {x|x>1}','D. {x|x<1 或 x>3}'],a:'A',e:'A∩B 取 x<3 且 x>1 的部分，即 {x|1<x<3}'},
+    {t:'single',q:'已知集合 A={0,1,2}，B={2,3}，则 A∪B 的元素个数为？',opts:['A. 3','B. 4','C. 5','D. 6'],a:'B',e:'A∪B={0,1,2,3}，共 4 个元素'},
+  ]);
+  if(Math.random()<.2)return {t:'multi',q:'已知集合 A={1,2,3,4}，B={3,4,5,6}，以下哪些说法正确？',opts:['A. A∩B={3,4}','B. A∪B={1,2,3,4,5,6}','C. A∩B={1,2}','D. A∪B={3,4}'],a:'AB',e:'A∩B 取公共元素 {3,4}，A∪B 取所有元素 {1,2,3,4,5,6}'};
+  if(Math.random()<.3)return {t:'multi',q:'已知集合 A={1,2,3}，B={3,4,5}，以下正确的是？',opts:['A. 1∈A','B. 3∈A∩B','C. A∪B={1,2,3,4,5}','D. 6∈A∪B'],a:'ABC',e:'1 属于 A，3 属于 A∩B，A∪B={1,2,3,4,5}，6 不在其中'};
+  if(Math.random()<.4)return {t:'solve',q:'已知 A={x|x²-3x+2=0}，B={x|x²-4=0}，求 A∪B 和 A∩B。',a:'A={1,2},B={-2,2},A∪B={-2,1,2},A∩B={2}',e:'解方程得 A={1,2}，B={-2,2}，再求并集和交集'};
+  const pool=[1,2,3,4,5,6,7,8,9,10], a=new Set(sample(pool,randInt(3,5))), b=new Set(sample(pool,randInt(2,5)));
+  const op=Math.random()<.4?'union':Math.random()<.7?'intersect':'subtract';
+  let result;
+  if(op==='union') result=new Set([...a,...b]);
+  else if(op==='intersect') result=new Set([...a].filter(x=>b.has(x)));
+  else {
+    const all=new Set(pool), tgt=Math.random()<.5?a:b, comp=new Set([...all].filter(x=>!tgt.has(x)));
+    const other=tgt===a?b:a; result=new Set([...comp].filter(x=>other.has(x)));
+  }
+  return {t:'fill',q:'已知集合 A='+formatSet(a)+'，B='+formatSet(b)+'，求 A'+(op==='subtract'?'∩(∁ᵤB)':op==='union'?'∪':'∩')+'B',a:formatSet(result),e:op==='union'?'并集取所有属于 A 或 B 的元素':op==='intersect'?'交集取既属于 A 又属于 B 的元素':'先求补集再取交集：'+formatSet(result)};
+};
+
+KB['集合间的基本关系'] = () => pick([
+  {t:'multi',q:'设 A={1,2,3}，以下哪些是 A 的子集？',opts:['A. {1,2}','B. {1,2,3,4}','C. ∅','D. {0,1}'],a:'AC',e:'子集是集合中部分或全部元素构成的集合，{1,2} 和 ∅ 是子集，{1,2,3,4} 和 {0,1} 不是'},
+  {t:'multi',q:'以下哪些集合与 {1,2,3} 相等？',opts:['A. {x|x²-5x+6=0}','B. {1,2,3}','C. {3,2,1}','D. {x|x 是小于 4 的正整数}'],a:'BCD',e:'B、C、D 都表示集合 {1,2,3}，A 的解为 {2,3}'},
+  {t:'fill',q:'集合 A={a,b,c} 的子集个数为？',a:'8',e:'子集个数 = 2ⁿ = 2³ = 8'},
+  {t:'fill',q:'集合 A={1,2,3,4} 的真子集个数为？',a:'15',e:'真子集 = 2ⁿ-1 = 16-1 = 15'},
+  {t:'fill',q:'设 A={1,2}，B={x|x²-3x+2=0}，则 A 与 B 的关系是？',a:'A⊆B',e:'B 解为 {1,2}，与 A 相等'},
+  {t:'single',q:'设 A={x|x>3}，B={x|x>2}，则 A 与 B 的关系是？',opts:['A. A⊆B','B. B⊆A','C. A=B','D. 无包含关系'],a:'A',e:'如果 x>3 则必然 x>2，所以 A 是 B 的子集'},
+  {t:'single',q:'集合 A={0,1}，B={x|x⊆A}，则 B 的元素个数为？',opts:['A. 2','B. 4','C. 8','D. 1'],a:'B',e:'B 是 A 的子集构成的集合，共 2²=4 个元素'},
+  {t:'solve',q:'已知 A={1,2,3,4}，B={2,4,6}，请写出 A 的所有子集，并判断 B 是否是 A 的子集。',a:'A 的子集有 ∅,{1},{2},{3},{4},{1,2},{1,3},{1,4},{2,3},{2,4},{3,4},{1,2,3},{1,2,4},{1,3,4},{2,3,4},{1,2,3,4}，B 不是 A 的子集',e:'A 有 4 个元素，共 16 个子集；B 中的 6 不在 A 中，所以 B 不是 A 的子集'},
+]);
+
+KB['充分条件与必要条件'] = () => pick([
+  {t:'multi',q:'设 p:x>0，以下哪些条件是 p 的充分条件？',opts:['A. x>1','B. x>-1','C. x=2','D. x>0'],a:'AC',e:'充分条件就是如果条件成立则 p 成立。x>1⇒x>0，x=2⇒x>0，但 x>-1 和 x>0 不一定推出 x>0'},
+  {t:'multi',q:'以下哪些命题中 p 是 q 的必要条件？',opts:['A. p:x>0，q:x>1','B. p:x²=1，q:x=1','C. p:x=1，q:x²=1','D. p:四边形是正方形，q:对角线相等'],a:'AB',e:'必要条件即 q⇒p。A 中 x>1⇒x>0，B 中 x=1⇒x²=1，C 和 D 是充分不必要'},
+  {t:'single',q:'p:x>2，q:x>1，则 p 是 q 的？',opts:['A. 充分不必要条件','B. 必要不充分条件','C. 充要条件','D. 既不充分也不必要'],a:'A',e:'x>2⇒x>1 但 x>1⇏x>2'},
+  {t:'single',q:'p:x=1，q:x²=1，则 p 是 q 的？',opts:['A. 充分不必要条件','B. 必要不充分条件','C. 充要条件','D. 既不充分也不必要'],a:'A',e:'x=1⇒x²=1 但 x²=1 可得 x=±1'},
+  {t:'single',q:'p:四边形是正方形，q:四边形的对角线相等，则 p 是 q 的？',opts:['A. 充分不必要条件','B. 必要不充分条件','C. 充要条件','D. 既不充分也不必要'],a:'A',e:'正方形⇒对角线相等，但对角线相等的四边形不一定是正方形'},
+  {t:'single',q:'p:|x|=|y|，q:x=y，则 p 是 q 的？',opts:['A. 充分不必要条件','B. 必要不充分条件','C. 充要条件','D. 既不充分也不必要'],a:'B',e:'x=y⇒|x|=|y|，但 |x|=|y| 时 x=±y'},
+  {t:'single',q:'p:△ABC 中 A=60°，q:sinA=√3/2，则 p 是 q 的？',opts:['A. 充分不必要条件','B. 必要不充分条件','C. 充要条件','D. 既不充分也不必要'],a:'A',e:'A=60°⇒sinA=√3/2，但 sinA=√3/2 时 A=60°或120°'},
+  {t:'single',q:'p:a>b，q:ac²>bc²，则 p 是 q 的？',opts:['A. 充分不必要条件','B. 必要不充分条件','C. 充要条件','D. 既不充分也不必要'],a:'D',e:'c=0 时 a>b⇏ac²>bc²，ac²>bc²⇒c≠0 且 a>b'},
+  {t:'solve',q:'请举出一个 p 是 q 的充分不必要条件的例子，并说明理由。',a:'答案不唯一，如 p:x=1，q:x²=1。因为 x=1⇒x²=1，但 x²=1 时 x 可能为 -1',e:'充分不必要就是条件能推出结论，但结论推不出条件'},
+  {t:'fill',q:'p:x>1，q:x>0，则 p 是 q 的___条件（填"充分不必要""必要不充分""充要""既不充分也不必要"）',a:'充分不必要',e:'x>1⇒x>0 但 x>0⇏x>1，充分不必要'},
+  {t:'fill',q:'p:x²=1，q:x=1，则 p 是 q 的___条件',a:'必要不充分',e:'x=1⇒x²=1 但 x²=1⇏x=1，必要不充分'},
+  {t:'fill',q:'p:x>2，q:x>2，则 p 是 q 的___条件',a:'充要',e:'p⇔q，充要条件'},
+  {t:'fill',q:'p:四边形是正方形，q:四边形的对角线垂直，则 p 是 q 的___条件',a:'充分不必要',e:'正方形⇒对角线垂直，但等腰梯形对角线也可垂直'},
+  {t:'fill',q:'p:a=0 且 b=0，q:a²+b²=0，则 p 是 q 的___条件',a:'充要',e:'a=0 且 b=0 ⇔ a²+b²=0'},
+]);
+
+KB['全称量词与存在量词'] = () => pick([
+  {t:'multi',q:'以下哪些命题是真命题？',opts:['A. ∀x∈R，x²≥0','B. ∃x∈R，x²=-1','C. ∀x>0，x+1/x≥2','D. ∃x∈R，x²<0'],a:'AC',e:'A：平方非负，真；C：基本不等式，真；B 和 D 在实数范围内不成立'},
+  {t:'multi',q:'以下命题的否定形式正确的有？',opts:['A. "∀x∈R，x²≥0" 的否定是 "∃x∈R，x²<0"','B. "∃x>0，x²=2" 的否定是 "∀x>0，x²≠2"','C. "∀x∈R，x>0" 的否定是 "∀x∈R，x≤0"','D. "∃x∈R，x=1" 的否定是 "∀x∈R，x≠1"'],a:'ABD',e:'全称变存在或存在变全称，否定结论。C 应为 "∃x∈R，x≤0"'},
+  {t:'single',q:'命题 "∀x∈R，x²≥0" 的否定是？',opts:['A. ∃x∈R，x²<0','B. ∃x∈R，x²≤0','C. ∀x∈R，x²<0','D. ∀x∈R，x²≤0'],a:'A',e:'全称量词变存在量词，否定结论：∃x∈R, x²<0'},
+  {t:'single',q:'命题 "∃x>0，x²=2" 的否定是？',opts:['A. ∀x>0，x²≠2','B. ∃x≤0，x²≠2','C. ∀x>0，x²=2','D. ∃x>0，x²≠2'],a:'A',e:'存在量词变全称量词，否定结论：∀x>0, x²≠2'},
+  {t:'fill',q:'命题 "∃x∈R，x²+1=0" 是___命题（填"真"或"假"）',a:'假',e:'x²+1≥1>0，不存在实数使 x²+1=0'},
+  {t:'fill',q:'命题 "∀x>2，x>1" 是___命题（填"真"或"假"）',a:'真',e:'对于所有大于 2 的实数，必然大于 1'},
+  {t:'single',q:'设命题 p:∀x∈R，x²+2x+3>0，则 p 的真假为？',opts:['A. 真','B. 假'],a:'A',e:'x²+2x+3=(x+1)²+2>0 恒成立'},
+  {t:'solve',q:'写出命题 "∀x∈R，x²+2x+2>0" 的否定，并判断原命题的真假，说明理由。',a:'否定：∃x∈R，x²+2x+2≤0。原命题为真，因为 x²+2x+2=(x+1)²+1≥1>0 恒成立',e:'全称变存在，否定结论。二次式配方为完全平方加正数，恒正'},
+  {t:'solve',q:'写出命题 "∃x>0，x+1/x≤2" 的否定，并判断该否定的真假。',a:'否定：∀x>0，x+1/x>2。该否定为假，因为当 x=1 时，x+1/x=2 不大于 2',e:'存在变全称，否定结论。举反例 x=1 即可说明否定不成立'},
+]);
+
+KB['不等式的性质'] = () => pick([
+  {t:'multi',q:'若 a>b，以下不一定成立的有？',opts:['A. a²>b²','B. 1/a<1/b','C. ac>bc','D. a-b>0'],a:'ABC',e:'A 需要 a,b 为正；B 需要 a,b 同号；C 需要 c>0；D a-b>0 等价于 a>b，一定成立'},
+  {t:'multi',q:'若 a>b>0>c>d，以下哪些成立？',opts:['A. a-c>b-d','B. a+c>b+d','C. ac<bd','D. a/d>b/c'],a:'AC',e:'A：a>b 且 -c>-d 相加；C：a>0,c<0,b>0,d<0，ac<0,bd>0 所以 ac<bd'},
+  {t:'single',q:'若 a>b，则以下一定成立的是？',opts:['A. a²>b²','B. 1/a<1/b','C. ac>bc','D. a-b>0'],a:'D',e:'a>b ⇒ a-b>0；A,B 需要 a,b 正负判断，C 需要 c>0'},
+  {t:'single',q:'若 a>b，c<d，则？',opts:['A. a-c>b-d','B. a-c<b-d','C. a+d>b+c','D. a+c>b+d'],a:'A',e:'a>b 且 -c>-d，相加得 a-c>b-d'},
+  {t:'fill',q:'若 a>b>0，则 √a___√b（填 > 或 <）',a:'>',e:'a>b>0 时，开方不变号'},
+  {t:'single',q:'若 a<b<0，则以下正确的是？',opts:['A. a²<ab','B. ab<b²','C. a²>b²','D. |a|<|b|'],a:'C',e:'负数比较：a<b<0 ⇒ a²>b²，|a|>|b|'},
+  {t:'fill',q:'若 0<a<1，则 a²___a（填 > 或 <）',a:'<',e:'0<a<1 时，平方后变小'},
+  {t:'solve',q:'已知 a>b>0，c<d<0，求证：a/d > b/c。',a:'因为 c<d<0，所以 1/d<1/c<0，又 a>b>0，所以 a/d<b/c（负数乘正数变号）',e:'注意不等式方向：乘以负数要变号'},
+]);
+
+KB['基本不等式'] = function() {
+  if(Math.random()<.2)return {t:'multi',q:'以下哪些不等式中 a,b 均为正数且成立？',opts:['A. (a+b)/2 ≥ √(ab)','B. a²+b² ≥ 2ab','C. a+1/a ≥ 2','D. (a+b)² ≥ 4ab'],a:'ABCD',e:'所有都是基本不等式的变形，当 a,b>0 时均成立'};
+  if(Math.random()<.25)return {t:'solve',q:'已知 a,b>0 且 a+b=8，求 ab 的最大值，并写出推导过程。',a:'ab≤16，当 a=b=4 时取等。过程：ab≤((a+b)/2)²=16',e:'基本不等式：ab≤((a+b)/2)²'};
+  if(Math.random()<.5){const a=pick([1,4,9,16,25,36]);const ans=2*Math.sqrt(a);return {t:'fill',q:'若 x>0，求 x+'+a+'/x 的最小值',a:String(ans),e:'x+'+a+'/x≥2√(x·'+a+'/x)=2√'+a+'='+ans}}
+  return pick([
+    {t:'fill',q:'若 x>0，求 x+1/x 的最小值',a:'2',e:'x+1/x ≥ 2√(x·1/x)=2'},
+    {t:'fill',q:'若 a,b>0 且 a+b=6，求 ab 的最大值',a:'9',e:'ab≤((a+b)/2)²=9'},
+    {t:'fill',q:'若 a,b>0 且 ab=4，求 a+b 的最小值',a:'4',e:'a+b≥2√(ab)=4'},
+    {t:'fill',q:'若 x>0，求 2x+8/x 的最小值',a:'8',e:'2x+8/x≥2√(2x·8/x)=8'},
+    {t:'single',q:'下列不等式中正确的是？',opts:['A. a+1/a≥2 恒成立','B. a²+b²≥2ab 恒成立','C. a+1/a≥2 当 a>0','D. (a+b)/2≥√ab 恒成立'],a:'B',e:'a²+b²-2ab=(a-b)²≥0 恒成立；A,C 需 a>0；D 需 a,b≥0'}
+  ]);
+};
+
+KB['二次不等式'] = function() {
+  if(Math.random()<.15)return pick([
+    {t:'single',q:'不等式 (x-1)(x+2)>0 的解集是？',opts:['A. (-∞,-2)∪(1,+∞)','B. (-2,1)','C. (-∞,1)∪(2,+∞)','D. (1,2)'],a:'A',e:'两根为 -2 和 1，大于取两边，解为 x<-2 或 x>1'},
+    {t:'single',q:'不等式 x²-4≤0 的解集是？',opts:['A. [-2,2]','B. (-2,2)','C. (-∞,-2]∪[2,+∞)','D. (-∞,-2)∪(2,+∞)'],a:'A',e:'x²-4≤0 ⇒ (x-2)(x+2)≤0，小于取中间，解集为 [-2,2]'},
+    {t:'single',q:'不等式 x²-2x-3>0 的解集是？',opts:['A. (-∞,-1)∪(3,+∞)','B. (-1,3)','C. (-∞,1)∪(3,+∞)','D. (1,3)'],a:'A',e:'x²-2x-3=(x-3)(x+1)>0，大于取两边，解为 x<-1 或 x>3'},
+    {t:'single',q:'不等式 -x²+2x+3>0 的解集是？',opts:['A. (-1,3)','B. (-∞,-1)∪(3,+∞)','C. (-3,1)','D. (-∞,-3)∪(1,+∞)'],a:'A',e:'两边乘以 -1 得 x²-2x-3<0 ⇒ (x-3)(x+1)<0，小于取中间，解为 -1<x<3'},
+    {t:'single',q:'二次不等式 ax²+bx+c<0 的解集为 (1,2)，则以下正确的是？',opts:['A. a>0','B. a<0','C. a=0','D. 无法确定'],a:'A',e:'解集在两根之间，说明二次项系数为正，即 a>0'},
+  ]);
+  if(Math.random()<.2)return {t:'multi',q:'关于 x 的不等式 (x-1)(x-3)>0 的解集，以下哪些说法正确？',opts:['A. 解集为 (-∞,1)∪(3,+∞)','B. 解集为 (1,3)','C. 不等式对应方程的根为 1 和 3','D. 大于取两边'],a:'ACD',e:'(x-1)(x-3)>0 对应两根 1 和 3，大于 0 取两边，解为 x<1 或 x>3'};
+  if(Math.random()<.2)return {t:'solve',q:'解不等式 x²-5x+6<0，并写出解集。',a:'(2,3)',e:'x²-5x+6=(x-2)(x-3)<0，小于取中间，解集为 (2,3)'};
+  const r1=randInt(-5,5);let r2;do{r2=randInt(-5,5)}while(r2===r1);
+  const [a,b]=[Math.min(r1,r2),Math.max(r1,r2)], gt=Math.random()<.5;
+  const s=gt?'>':'<', ans=gt?'(-∞,'+a+')∪('+b+',+∞)':'('+a+','+b+')';
+  const e=gt?'大于取两边：x<'+a+' 或 x>'+b:'小于取中间：'+a+'<x<'+b;
+  return {t:'fill',q:'解不等式 (x'+(a<0?'+':'-')+Math.abs(a)+')(x'+(b<0?'+':'-')+Math.abs(b)+')'+s+'0',a:ans,e:e};
+};
+
+KB['函数概念与定义域'] = () => pick([
+  {t:'multi',q:'以下哪些说法正确？',opts:['A. f(x)=x 和 g(x)=x²/x 不是同一函数','B. f(x)=|x| 和 g(x)=√(x²) 是同一函数','C. f(x)=x 和 g(x)=(√x)² 是同一函数','D. f(x)=x² 的定义域为 R'],a:'ABD',e:'A：定义域不同；B：都等于 |x|；C：g(x) 定义域 x≥0 不同；D：x² 定义域为全体实数'},
+  {t:'multi',q:'以下函数中定义域为 R 的有？',opts:['A. f(x)=x²','B. f(x)=√(x+1)','C. f(x)=|x|','D. f(x)=1/(x²+1)'],a:'ACD',e:'A：R；C：R；D：分母恒正，R；B：x+1≥0 ⇒ x≥-1'},
+  {t:'fill',q:'求 f(x)=√(x-2) 的定义域',a:'[2,+∞)',e:'x-2≥0 ⇒ x≥2'},
+  {t:'fill',q:'求 f(x)=1/(x-3) 的定义域',a:'(-∞,3)∪(3,+∞)',e:'分母 x-3≠0 ⇒ x≠3'},
+  {t:'fill',q:'求 f(x)=√(4-x²) 的定义域',a:'[-2,2]',e:'4-x²≥0 ⇒ x²≤4 ⇒ -2≤x≤2'},
+  {t:'fill',q:'求 f(x)=√(x+1)/(x-2) 的定义域',a:'[-1,2)∪(2,+∞)',e:'x+1≥0 且 x-2≠0 ⇒ x≥-1 且 x≠2'},
+  {t:'fill',q:'求 f(x)=√(x²-4) 的定义域',a:'(-∞,-2]∪[2,+∞)',e:'x²-4≥0 ⇒ x≤-2 或 x≥2'},
+  {t:'fill',q:'求 f(x)=√(3-x) 的定义域',a:'(-∞,3]',e:'3-x≥0 ⇒ x≤3'},
+  {t:'fill',q:'求 f(x)=1/(x²-1) 的定义域',a:'(-∞,-1)∪(-1,1)∪(1,+∞)',e:'x²-1≠0 ⇒ x≠±1'},
+  {t:'fill',q:'求 f(x)=√(x)/√(2-x) 的定义域',a:'[0,2)',e:'x≥0 且 2-x>0 ⇒ 0≤x<2'},
+  {t:'single',q:'下列各组函数表示同一个函数的是？',opts:['A. f(x)=x，g(x)=x²/x','B. f(x)=x，g(x)=√(x²)','C. f(x)=x²，g(x)=(x+1)²','D. f(x)=|x|，g(x)=√(x²)'],a:'D',e:'A 定义域不同，B g(x)=|x|，C 表达式不同'}
+]);
+
+KB['单调性与奇偶性'] = () => pick([
+  {t:'multi',q:'以下哪些函数是奇函数？',opts:['A. f(x)=x³','B. f(x)=|x|','C. f(x)=1/x','D. f(x)=x+1'],a:'AC',e:'奇函数满足 f(-x)=-f(x)，A：(-x)³=-x³，C：1/(-x)=-1/x；B 是偶函数，D 非奇非偶'},
+  {t:'multi',q:'以下哪些函数在 (0,+∞) 上递增？',opts:['A. f(x)=x²','B. f(x)=1/x','C. f(x)=x','D. f(x)=-x²'],a:'AC',e:'A：x² 在 (0,+∞) 递增；C：x 在 R 上递增；B：1/x 递减；D：-x² 递减'},
+  {t:'fill',q:'f(x)=x²-2x+3 的单调递增区间是？',a:'[1,+∞)',e:'对称轴 x=1，开口向上，x≥1 递增'},
+  {t:'fill',q:'f(x)=-x²+4x 的单调递减区间是？',a:'[2,+∞)',e:'对称轴 x=2，开口向下，x≥2 递减'},
+  {t:'fill',q:'f(x)=1/x 在 (0,+∞) 上的单调性是？',a:'减函数',e:'x 增大时 1/x 减小'},
+  {t:'fill',q:'f(x)=|x| 在 (-∞,0] 上的单调性是？',a:'减函数',e:'x≤0 时 f(x)=-x，随 x 增大而减小'},
+  {t:'fill',q:'判断 f(x)=x² 的奇偶性',a:'偶函数',e:'f(-x)=(-x)²=x²=f(x)'},
+  {t:'fill',q:'判断 f(x)=x³ 的奇偶性',a:'奇函数',e:'f(-x)=(-x)³=-x³=-f(x)'},
+  {t:'fill',q:'判断 f(x)=x²+2x 的奇偶性',a:'非奇非偶函数',e:'f(-x)=x²-2x≠f(x) 且 ≠-f(x)'},
+  {t:'fill',q:'判断 f(x)=|x| 的奇偶性',a:'偶函数',e:'f(-x)=|-x|=|x|=f(x)'},
+  {t:'fill',q:'判断 f(x)=1/x 的奇偶性',a:'奇函数',e:'f(-x)=-1/x=-f(x)'},
+  {t:'single',q:'若 f(x) 是奇函数，且 f(2)=5，则 f(-2)=？',opts:['A. 5','B. -5','C. 0','D. 不确定'],a:'B',e:'奇函数 f(-x)=-f(x) ⇒ f(-2)=-f(2)=-5'},
+  {t:'solve',q:'已知 f(x)=x²-4x+3，求 f(x) 的单调区间，并判断其奇偶性。',a:'单调递减区间 (-∞,2]，单调递增区间 [2,+∞)，非奇非偶函数',e:'对称轴 x=2，开口向上；f(-x)=x²+4x+3≠f(x) 且 ≠-f(x)'},
+]);
+
+KB['幂函数'] = () => pick([
+  {t:'multi',q:'以下哪些是幂函数？',opts:['A. y=x²','B. y=2x','C. y=x^(1/2)','D. y=x⁻¹'],a:'ACD',e:'幂函数形式为 y=x^α，A、C、D 都是，B y=2x 是一次函数而非幂函数'},
+  {t:'multi',q:'以下关于幂函数 y=x^α 的说法正确的有？',opts:['A. α=1 时图像过原点','B. α>0 时在 (0,+∞) 递增','C. α<0 时在 (0,+∞) 递减','D. 所有幂函数都过 (1,1)'],a:'BCD',e:'所有幂函数都过 (1,1)；α>0 在 (0,+∞) 递增；α<0 递减；A 中 α=1 图像过 (0,0) 亦正确'},
+  {t:'single',q:'下列函数是幂函数的是？',opts:['A. y=2x','B. y=x²','C. y=2ˣ','D. y=x+1'],a:'B',e:'幂函数形式为 y=x^α，只有 B 符合'},
+  {t:'fill',q:'幂函数 y=x² 的图像经过点 (2,___)',a:'4',e:'y=2²=4'},
+  {t:'single',q:'幂函数 y=x³ 的图像关于？',opts:['A. y 轴对称','B. 原点对称','C. x 轴对称','D. 直线 y=x 对称'],a:'B',e:'y=x³ 是奇函数，关于原点对称'},
+  {t:'single',q:'幂函数 y=x^(1/2) 的定义域是？',opts:['A. R','B. [0,+∞)','C. (0,+∞)','D. (-∞,+∞)'],a:'B',e:'x^(1/2)=√x，定义域为 x≥0'},
+  {t:'fill',q:'幂函数 y=x^(-1) 在 (0,+∞) 上的单调性是？',a:'减函数',e:'y=1/x，x 增大时函数值减小'}
+]);
+
+KB['指数运算'] = () => pick([
+  {t:'multi',q:'以下等式正确的有？',opts:['A. 2³×2²=2⁵','B. (2³)²=2⁶','C. 2⁶÷2²=2³','D. (ab)³=a³b³'],a:'ABD',e:'A：同底相乘指数相加；B：幂的乘方指数相乘；C：应为 2⁴；D：积的乘方等于乘方的积'},
+  {t:'solve',q:'计算：³√(8) + √(25) - ⁴√(16)，写出步骤。',a:'³√8=2，√25=5，⁴√16=2，原式=2+5-2=5',e:'分别求出各根式的值再加减'},
+  {t:'fill',q:'2³ = ___',a:'8',e:'2×2×2=8'},
+  {t:'fill',q:'(2²)³ = ___',a:'64',e:'(4)³=64，或 2^(2×3)=2⁶=64'},
+  {t:'fill',q:'√(16) = ___',a:'4',e:'√16=4'},
+  {t:'fill',q:'³√(27) = ___',a:'3',e:'3³=27'},
+  {t:'fill',q:'4^(1/2) = ___',a:'2',e:'4^(1/2)=√4=2'},
+  {t:'single',q:'2x × 2³ = 2⁷，则 x=？',opts:['A. 3','B. 4','C. 8','D. 2'],a:'B',e:'2^(x+3)=2⁷ ⇒ x+3=7 ⇒ x=4'},
+  {t:'fill',q:'(√2 × √8) = ___',a:'4',e:'√2×√8=√16=4'}
+]);
+
+KB['指数函数'] = () => pick([
+  {t:'multi',q:'以下哪些函数在 R 上单调递增？',opts:['A. y=2ˣ','B. y=(1/3)ˣ','C. y=10ˣ','D. y=0.5ˣ'],a:'AC',e:'底数大于 1 时指数函数递增，2>1，10>1；1/3<1，0.5<1 递减'},
+  {t:'multi',q:'以下关于指数函数 y=2ˣ 的说法正确的有？',opts:['A. 过定点 (0,1)','B. 值域为 (0,+∞)','C. 是增函数','D. 过定点 (1,0)'],a:'ABC',e:'y=2ˣ 过 (0,1)，值域 (0,+∞)，底数 2>1 为增函数；D 是 (1,0) 为对数函数定点'},
+  {t:'single',q:'下列是指数函数的是？',opts:['A. y=x²','B. y=2ˣ','C. y=x+1','D. y=√x'],a:'B',e:'指数函数形式为 y=aˣ (a>0,a≠1)'},
+  {t:'fill',q:'指数函数 y=2ˣ 恒过的定点是？',a:'(0,1)',e:'a⁰=1 对所有 a>0 成立'},
+  {t:'single',q:'函数 y=2ˣ 在 R 上的单调性是？',opts:['A. 增函数','B. 减函数','C. 不增不减','D. 不确定'],a:'A',e:'底数 2>1，指数函数在 R 上递增'},
+  {t:'single',q:'函数 y=(1/3)ˣ 在 R 上的单调性是？',opts:['A. 增函数','B. 减函数','C. 先增后减','D. 先减后增'],a:'B',e:'底数 0<1/3<1，指数函数在 R 上递减'},
+  {t:'single',q:'a=2⁰·³，b=2⁰·⁵，c=2⁰·² 的大小关系是？',opts:['A. a>b>c','B. b>a>c','C. c>a>b','D. b>c>a'],a:'B',e:'y=2ˣ 递增，0.5>0.3>0.2 ⇒ b>a>c'},
+  {t:'fill',q:'2ˣ=8，x=___',a:'3',e:'2³=8'},
+  {t:'solve',q:'比较大小：2⁰·⁴ 和 2⁰·⁶，并说明理由。',a:'2⁰·⁴ < 2⁰·⁶，因为 y=2ˣ 在 R 上单调递增',e:'底数 2>1，指数越大函数值越大'},
+]);
+
+KB['对数运算'] = () => pick([
+  {t:'multi',q:'以下等式正确的有？',opts:['A. log₂4+log₂8=5','B. log₃(27/3)=2','C. lg100=2','D. ln e²=2'],a:'ABCD',e:'A：log₂4+log₂8=2+3=5；B：log₃27-log₃3=3-1=2；C：10²=100；D：ln e²=2ln e=2'},
+  {t:'single',q:'log₂8 的值是？',opts:['A. 2','B. 3','C. 4','D. 8'],a:'B',e:'2³=8 ⇒ log₂8=3'},
+  {t:'single',q:'lg 1000 的值是？',opts:['A. 10','B. 100','C. 3','D. 1000'],a:'C',e:'10³=1000 ⇒ lg1000=3'},
+  {t:'single',q:'ln e² 的值是？',opts:['A. 1','B. e','C. 2','D. e²'],a:'C',e:'ln e²=2ln e=2'},
+  {t:'single',q:'log₃81 的值是？',opts:['A. 3','B. 4','C. 9','D. 27'],a:'B',e:'3⁴=81 ⇒ log₃81=4'},
+  {t:'single',q:'下列各式中正确的是？',opts:['A. log₂4=2','B. log₂8=4','C. log₃9=3','D. lg10=0'],a:'A',e:'log₂4=2（2²=4）；log₂8=3；log₃9=2；lg10=1'},
+  {t:'solve',q:'已知 log₂x=3，求 x，并写出对数式与指数式的转换过程。',a:'x=2³=8，log₂x=3 ⇔ 2³=x',e:'对数式 log₂x=3 ⇔ 指数式 2³=x'},
+  {t:'fill',q:'log₂8 = ___',a:'3',e:'2³=8'},
+  {t:'fill',q:'log₃9 = ___',a:'2',e:'3²=9'},
+  {t:'fill',q:'lg 100 = ___',a:'2',e:'10²=100'},
+  {t:'fill',q:'ln e = ___',a:'1',e:'e¹=e'},
+  {t:'fill',q:'log₂(4×8) = ___',a:'5',e:'log₂4+log₂8=2+3=5'},
+  {t:'fill',q:'log₃(27/3) = ___',a:'2',e:'log₃27-log₃3=3-1=2'},
+  {t:'fill',q:'log₅25 + log₂16 = ___',a:'6',e:'2+4=6'}
+]);
+
+KB['对数函数'] = () => pick([
+  {t:'multi',q:'以下关于对数函数 y=log₂x 的说法正确的有？',opts:['A. 过定点 (1,0)','B. 值域为 R','C. 在 (0,+∞) 上递增','D. 定义域为 (0,+∞)'],a:'ABCD',e:'y=log₂x 定义域 (0,+∞)，过 (1,0)，值域 R，底数 2>1 递增'},
+  {t:'multi',q:'以下哪些函数在 (0,+∞) 上递减？',opts:['A. y=log₂x','B. y=log₁/₂x','C. y=log₀.₃x','D. y=ln x'],a:'BC',e:'底数在 0 和 1 之间时对数函数递减，1/2<1，0.3<1；A 和 D 底数>1 递增'},
+  {t:'single',q:'对数函数 y=log₂x 恒过的定点是？',opts:['A. (0,1)','B. (1,0)','C. (0,0)','D. (1,1)'],a:'B',e:'logₐ1=0 ⇒ 恒过 (1,0)'},
+  {t:'single',q:'函数 y=log₂x 在定义域上的单调性是？',opts:['A. 增函数','B. 减函数','C. 不增不减','D. 不确定'],a:'A',e:'底数 2>1，对数函数在 (0,+∞) 递增'},
+  {t:'single',q:'函数 y=log₁/₂x 在定义域上的单调性是？',opts:['A. 增函数','B. 减函数','C. 先增后减','D. 先减后增'],a:'B',e:'底数 0<1/2<1，对数函数在 (0,+∞) 递减'},
+  {t:'single',q:'y=log₂x 的定义域是？',opts:['A. R','B. (0,+∞)','C. [0,+∞)','D. (-∞,0)'],a:'B',e:'真数 x>0'},
+  {t:'fill',q:'log₂x=5，x=___',a:'32',e:'x=2⁵=32'},
+  {t:'solve',q:'比较 log₂3 和 log₂5 的大小，并说明理由。',a:'log₂3 < log₂5，因为 y=log₂x 在 (0,+∞) 上单调递增，3<5',e:'底数 2>1，对数函数递增，真数越大函数值越大'},
+  {t:'solve',q:'已知函数 f(x)=log₂(x-1)，求 f(x) 的定义域，并计算 f(3) 的值。',a:'定义域：x-1>0 ⇒ x>1，即 (1,+∞)；f(3)=log₂(3-1)=log₂2=1',e:'真数大于 0 得定义域，代入计算对数值'}
+]);
+
+KB['函数的零点'] = () => pick([
+  {t:'multi',q:'以下哪些函数有零点？',opts:['A. f(x)=x²-4','B. f(x)=x²+1','C. f(x)=x-3','D. f(x)=x²-5x+6'],a:'ACD',e:'A：x=±2；C：x=3；D：x=2,3；B：x²+1=0 无实数解'},
+  {t:'multi',q:'以下说法正确的有？',opts:['A. 函数 f(x) 的零点是方程 f(x)=0 的根','B. 零点即函数图像与 x 轴的交点横坐标','C. 每个函数都有零点','D. 二次函数最多有两个零点'],a:'ABD',e:'A、B 为零点的定义；D 正确，二次函数最多两个零点；C 错误，如 f(x)=x²+1 无零点'},
+  {t:'fill',q:'函数 f(x)=x²-4 的零点是？',a:'±2',e:'x²-4=0 ⇒ x=±2'},
+  {t:'fill',q:'函数 f(x)=2x-4 的零点是？',a:'2',e:'2x-4=0 ⇒ x=2'},
+  {t:'single',q:'函数 f(x)=x²+1 的零点个数为？',opts:['A. 0','B. 1','C. 2','D. 无穷'],a:'A',e:'x²+1=0 无实数解'},
+  {t:'fill',q:'函数 f(x)=x²-5x+6 的零点是？',a:'2和3',e:'x²-5x+6=(x-2)(x-3)=0 ⇒ x=2 或 x=3'},
+  {t:'single',q:'若函数 f(x)=x²-2x+m 有一个零点为 0，则 m=？',opts:['A. 0','B. 1','C. -1','D. 2'],a:'A',e:'f(0)=0 ⇒ 0-0+m=0 ⇒ m=0'},
+  {t:'fill',q:'函数 f(x)=x³-x 的零点是？',a:'-1,0,1',e:'x(x²-1)=x(x-1)(x+1)=0 ⇒ x=-1,0,1'},
+  {t:'solve',q:'求函数 f(x)=x²-2x-3 的零点，并判断 f(x) 在 (0,4) 内是否有零点。',a:'零点为 -1 和 3，3 在 (0,4) 内，所以有零点',e:'x²-2x-3=(x-3)(x+1)=0 ⇒ x=-1 或 x=3'},
+]);
+
+KB['任意角与弧度制'] = () => pick([
+  {t:'multi',q:'以下与 30° 终边相同的角有？',opts:['A. 390°','B. -330°','C. 150°','D. -30°'],a:'AB',e:'与 30° 终边相同的角为 30°+k·360°，390°=30°+360°，-330°=30°-360°'},
+  {t:'multi',q:'以下弧度与角度对应正确的有？',opts:['A. 30°=π/6','B. 90°=π/2','C. 180°=π','D. 60°=π/4'],a:'ABC',e:'30°=π/6，60°=π/3，90°=π/2，180°=π；D 应为 π/3'},
+  {t:'fill',q:'30° = ___π rad',a:'π/6',e:'30°×π/180=π/6'},
+  {t:'fill',q:'60° = ___π rad',a:'π/3',e:'60°×π/180=π/3'},
+  {t:'fill',q:'90° = ___π rad',a:'π/2',e:'90°×π/180=π/2'},
+  {t:'fill',q:'π rad = ___°',a:'180',e:'π=180°'},
+  {t:'single',q:'与 30° 终边相同的角是？',opts:['A. 390°','B. -30°','C. 150°','D. 330°'],a:'A',e:'390°=30°+360°，终边相同'},
+  {t:'fill',q:'-120° 化为弧度是？',a:'-2π/3',e:'-120×π/180=-2π/3'},
+  {t:'solve',q:'将 120°、150°、210° 分别化为弧度，并写出终边相同的角的通用表达式。',a:'120°=2π/3，150°=5π/6，210°=7π/6；与它们终边相同的角分别为 2π/3+2kπ、5π/6+2kπ、7π/6+2kπ（k∈Z）',e:'角度转弧度乘以 π/180，终边相同加 2kπ'},
+  {t:'solve',q:'一个扇形的圆心角为 60°，半径为 3，求扇形的弧长和面积，写出计算过程。',a:'弧长 l=αr=(π/3)×3=π；面积 S=½lr=½×π×3=3π/2',e:'先将圆心角化为弧度 α=60°=π/3，再代弧长和面积公式'}
+]);
+
+KB['三角函数的概念'] = () => pick([
+  {t:'multi',q:'以下三角函数值正确的有？',opts:['A. sin30°=1/2','B. cos60°=1/2','C. tan45°=1','D. sin60°=1/2'],a:'ABC',e:'sin30°=1/2，cos60°=1/2，tan45°=1；D sin60°=√3/2'},
+  {t:'multi',q:'以下恒等式成立的有？',opts:['A. sin²α+cos²α=1','B. tanα=sinα/cosα','C. 1+tan²α=sec²α','D. sinα=tanα·cosα'],a:'ABCD',e:'所有都是同角三角函数的基本关系式和派生公式'},
+  {t:'fill',q:'sin π/6 = ___',a:'1/2',e:'sin30°=1/2'},
+  {t:'fill',q:'cos π/3 = ___',a:'1/2',e:'cos60°=1/2'},
+  {t:'fill',q:'tan π/4 = ___',a:'1',e:'tan45°=1'},
+  {t:'single',q:'sin²α + cos²α =？',opts:['A. 0','B. 1','C. tanα','D. sinα+cosα'],a:'B',e:'同角三角函数基本关系：sin²α+cos²α=1'},
+  {t:'single',q:'若 sinα=1/2 且 α 为锐角，则 α=？',opts:['A. 30°','B. 45°','C. 60°','D. 90°'],a:'A',e:'sin30°=1/2'},
+  {t:'solve',q:'已知角 α 的终边经过点 P(3,4)，求 sinα、cosα、tanα 的值。',a:'r=√(3²+4²)=5，sinα=4/5，cosα=3/5，tanα=4/3',e:'先求 r=√(x²+y²)，再按定义 sinα=y/r、cosα=x/r、tanα=y/x'},
+  {t:'solve',q:'已知 sinα=3/5，且 α 是第二象限角，求 cosα 和 tanα 的值。',a:'cos²α=1-sin²α=1-9/25=16/25，α 为第二象限角，cosα=-4/5，tanα=sinα/cosα=-3/4',e:'利用 sin²α+cos²α=1 求 cos²α，注意象限定符号'}
+]);
+
+KB['诱导公式'] = () => pick([
+  {t:'multi',q:'以下诱导公式正确的有？',opts:['A. sin(π-α)=sinα','B. cos(-α)=cosα','C. sin(π+α)=sinα','D. tan(π+α)=tanα'],a:'ABD',e:'A 互补角正弦相等；B 余弦为偶函数；C 应为 -sinα；D tan 周期 π'},
+  {t:'multi',q:'以下等式正确的有？',opts:['A. sin(-α)=-sinα','B. cos(π-α)=-cosα','C. tan(-α)=tanα','D. sin(π/2-α)=cosα'],a:'ABD',e:'A sin 为奇函数；B 互补角余弦互为相反数；C tan 为奇函数，应为 -tanα；D 互余关系'},
+  {t:'fill',q:'sin(π-α) = ___',a:'sinα',e:'互补角的正弦值相等'},
+  {t:'fill',q:'sin(-α) = ___',a:'-sinα',e:'sin 是奇函数'},
+  {t:'fill',q:'cos(-α) = ___',a:'cosα',e:'cos 是偶函数'},
+  {t:'fill',q:'sin(π+α) = ___',a:'-sinα',e:'π+α 与 α 的正弦值互为相反数'},
+  {t:'fill',q:'cos(π-α) = ___',a:'-cosα',e:'互补角的余弦值互为相反数'},
+  {t:'fill',q:'tan(π+α) = ___',a:'tanα',e:'tan 周期为 π'},
+  {t:'single',q:'sin(π-α) =？',opts:['A. sinα','B. -sinα','C. cosα','D. -cosα'],a:'A',e:'互补角的正弦值相等，sin(π-α)=sinα'},
+  {t:'single',q:'cos(π+α) =？',opts:['A. cosα','B. -cosα','C. sinα','D. -sinα'],a:'B',e:'cos(π+α)=-cosα'},
+  {t:'single',q:'sin(π/2-α) =？',opts:['A. sinα','B. cosα','C. -sinα','D. -cosα'],a:'B',e:'互余关系：sin(π/2-α)=cosα'},
+  {t:'single',q:'tan(-α) =？',opts:['A. tanα','B. -tanα','C. cotα','D. -cotα'],a:'B',e:'tan 是奇函数：tan(-α)=-tanα'},
+  {t:'solve',q:'化简 sin(π-α)·cos(π+α)/sin(π/2-α)，写出化简过程。',a:'sin(π-α)=sinα，cos(π+α)=-cosα，sin(π/2-α)=cosα，原式=sinα·(-cosα)/cosα=-sinα',e:'分别用诱导公式化简每个部分再约分'},
+  {t:'solve',q:'已知 sinα=1/2，求 sin(π-α)+cos(π/2-α) 的值，写出过程。',a:'sin(π-α)=sinα=1/2，cos(π/2-α)=sinα=1/2，原式=1/2+1/2=1',e:'用诱导公式转化再代入已知值'}
+]);
+
+KB['三角函数的图像与性质'] = () => pick([
+  {t:'multi',q:'以下关于 y=sinx 的说法正确的有？',opts:['A. 最小正周期 2π','B. 值域 [-1,1]','C. 是奇函数','D. 在 [π/2,3π/2] 上递增'],a:'ABC',e:'A、B、C 正确；D 在 [π/2,3π/2] 上递减'},
+  {t:'multi',q:'以下关于 y=cosx 的说法正确的有？',opts:['A. 是偶函数','B. 最小正周期 2π','C. 在 [0,π] 上递减','D. 对称轴为 x=kπ'],a:'ABC',e:'A、B、C 正确；D 不对称轴为 x=kπ，应为 x=kπ'},
+  {t:'fill',q:'y=sinx 的最小正周期是？',a:'2π',e:'T=2π'},
+  {t:'fill',q:'y=cosx 的最小正周期是？',a:'2π',e:'T=2π'},
+  {t:'fill',q:'y=tanx 的最小正周期是？',a:'π',e:'T=π'},
+  {t:'single',q:'y=sinx 的值域是？',opts:['A. [-1,1]','B. [0,1]','C. R','D. (-1,1)'],a:'A',e:'正弦函数的值域为 [-1,1]'},
+  {t:'single',q:'y=sinx 的对称轴是？',opts:['A. x=kπ','B. x=kπ+π/2','C. x=2kπ','D. x=π/2+kπ'],a:'B',e:'y=sinx 在 x=π/2+kπ 处取得最值'},
+  {t:'single',q:'y=cosx 在 [0,π] 上是？',opts:['A. 增函数','B. 减函数','C. 先增后减','D. 先减后增'],a:'B',e:'y=cosx 在 [0,π] 递减'},
+  {t:'solve',q:'求函数 y=sinx 的单调递增区间和对称轴方程，写出推导过程。',a:'单调递增区间为 [-π/2+2kπ, π/2+2kπ]（k∈Z），对称轴为 x=π/2+kπ（k∈Z）',e:'y=sinx 在 -π/2→π/2 递增，对称轴在取最值处'},
+  {t:'solve',q:'比较 sin100° 和 sin200° 的大小，并说明理由。',a:'sin100° > sin200°。因为 y=sinx 在 [π/2,3π/2] 递减，100°≈5π/9 < 200°≈10π/9，所以 sin100° > sin200°',e:'将角度化弧度后利用单调性判断'}
+]);
+
+KB['三角恒等变换'] = () => pick([
+  {t:'multi',q:'以下关于二倍角公式正确的有？',opts:['A. sin2α=2sinαcosα','B. cos2α=cos²α-sin²α','C. cos2α=2cos²α-1','D. cos2α=1-2sin²α'],a:'ABCD',e:'四个都是二倍角公式的正确形式'},
+  {t:'multi',q:'以下和角公式正确的有？',opts:['A. sin(α+β)=sinαcosβ+cosαsinβ','B. cos(α+β)=cosαcosβ-sinαsinβ','C. sin(α-β)=sinαcosβ-cosαsinβ','D. cos(α-β)=cosαcosβ+sinαsinβ'],a:'ABCD',e:'四个都是和差角公式的正确形式'},
+  {t:'fill',q:'sin2α = 2sinα____',a:'cosα',e:'二倍角公式 sin2α=2sinαcosα'},
+  {t:'fill',q:'cos2α = 2cos²α - ___',a:'1',e:'cos2α=2cos²α-1'},
+  {t:'fill',q:'sin(α+β) = sinαcosβ + cosα____',a:'sinβ',e:'和角公式 sin(α+β)=sinαcosβ+cosαsinβ'},
+  {t:'fill',q:'cos(α+β) = cosαcosβ - sinα____',a:'sinβ',e:'和角公式 cos(α+β)=cosαcosβ-sinαsinβ'},
+  {t:'single',q:'sin15° 的值是？',opts:['A. (√6-√2)/4','B. (√6+√2)/4','C. √3/2','D. 1/2'],a:'A',e:'sin15°=(√6-√2)/4'},
+  {t:'solve',q:'利用和角公式求 sin75° 的值，写出计算过程。',a:'sin75°=sin(45°+30°)=sin45°cos30°+cos45°sin30°=√2/2×√3/2+√2/2×1/2=(√6+√2)/4',e:'将 75° 拆为 45°+30°，代和角公式'},
+  {t:'solve',q:'已知 sinα=3/5，α 为锐角，求 sin2α 的值。',a:'cos²α=1-sin²α=1-9/25=16/25，α 为锐角 ⇒ cosα=4/5，sin2α=2sinαcosα=2×3/5×4/5=24/25',e:'先求 cosα，再代二倍角公式 sin2α=2sinαcosα'}
+]);
+
+KB['y=Asin(ωx+φ)'] = () => pick([
+  {t:'multi',q:'关于函数 y=3sin(2x+π) 的说法正确的有？',opts:['A. 振幅为 3','B. 周期为 π','C. 相位为 2x+π','D. 初相为 π'],a:'ABCD',e:'A=|3|=3，T=2π/2=π，相位 2x+π，初相 φ=π'},
+  {t:'multi',q:'如何由 y=sinx 得到 y=sin(2x+π/3)？以下步骤正确的有？',opts:['A. 横坐标缩短为 1/2','B. 向左平移 π/3','C. 向左平移 π/6','D. 纵坐标不变'],a:'ACD',e:'先缩短横坐标为 1/2 得 y=sin2x，再向左平移 π/6 得 y=sin2(x+π/6)=sin(2x+π/3)，纵坐标不变'},
+  {t:'fill',q:'y=2sinx 的最大值为？',a:'2',e:'最大值 |A|=2'},
+  {t:'fill',q:'y=sin2x 的最小正周期是？',a:'π',e:'T=2π/2=π'},
+  {t:'fill',q:'y=3sin(2x+π) 的振幅是？',a:'3',e:'|A|=3'},
+  {t:'fill',q:'y=sin(x+π/2) 的图像可由 y=sinx 向___平移 π/2 得到',a:'左',e:'x→x+π/2，左加右减，向左平移 π/2'},
+  {t:'fill',q:'y=sin(1/2 x) 的最小正周期是？',a:'4π',e:'T=2π/(1/2)=4π'},
+  {t:'single',q:'如何由 y=sinx 得到 y=sin(2x) 的图像？',opts:['A. 横坐标伸长 2 倍','B. 横坐标缩短到 1/2','C. 纵坐标缩短到 1/2','D. 向左平移 2 单位'],a:'B',e:'ω=2，横坐标变为原来的 1/2'},
+  {t:'solve',q:'求函数 y=2sin(3x+π/3) 的振幅、周期、初相，并说明如何由 y=sinx 得到其图像。',a:'振幅 A=2，周期 T=2π/3，初相 φ=π/3。变换步骤：① y=sinx 横坐标缩短为 1/3 得 y=sin3x；② 向左平移 π/9 得 y=sin(3x+π/3)；③ 纵坐标伸长为 2 倍得 y=2sin(3x+π/3)',e:'A=|A|，T=2π/ω，φ=π/3。先伸缩后平移'},
+  {t:'solve',q:'函数 y=sinx 图像经过怎样的变换可以得到 y=sin(2x-π/4) 的图像？写出两种不同的路径。',a:'路径一：① 横坐标缩短为 1/2 得 y=sin2x；② 向右平移 π/8 得 y=sin(2x-π/4)。路径二：① 向右平移 π/4 得 y=sin(x-π/4)；② 横坐标缩短为 1/2 得 y=sin(2x-π/4)',e:'先伸缩后平移或先平移后伸缩，注意平移量不同'}
+]);
+
+const TREE = [
+  { chapter:'必修一', sections:['集合与常用逻辑用语','一元二次函数、方程和不等式','函数的概念与性质','指数函数与对数函数','三角函数'] }
+];
+const SECTION_MAP = {
+  '集合与常用逻辑用语':['集合的基本运算','集合间的基本关系','充分条件与必要条件','全称量词与存在量词'],
+  '一元二次函数、方程和不等式':['不等式的性质','基本不等式','二次不等式'],
+  '函数的概念与性质':['函数概念与定义域','单调性与奇偶性','幂函数'],
+  '指数函数与对数函数':['指数运算','指数函数','对数运算','对数函数','函数的零点'],
+  '三角函数':['任意角与弧度制','三角函数的概念','诱导公式','三角函数的图像与性质','三角恒等变换','y=Asin(ωx+φ)'],
+};
+const ALL_KPS = Object.values(SECTION_MAP).flat();
+
+// 自动检测已登录教师，跳过登录界面
+(function(){
+  try{
+    var pw=localStorage.getItem('math_teacher_pw');
+    if(!pw)localStorage.setItem('math_teacher_pw','admin123');
+    var user=getCurrentUser();
+    if(user&&user.role==='teacher'){
+      document.getElementById('loginOverlay').style.display='none';
+      document.getElementById('mainLayout').style.display='block';
+      initPanel();
+    }
+  }catch(e){}
+})();
+window.addEventListener('storage',function(e){
+  if(e.key)initPanel();
+});
+</script>
+</body>
+</html>

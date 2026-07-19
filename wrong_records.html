@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📕 错题本</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f8fafc;color:#1e293b;padding:20px}
+h1{font-size:1.3rem;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.summary{font-size:.85rem;color:#64748b;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:.82rem;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #f1f5f9;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+th{background:#f1f5f9;color:#475569;font-weight:600;font-size:.78rem}
+tr:hover{background:#fafaff}
+.empty{text-align:center;padding:40px;color:#94a3b8;font-size:.9rem}
+.wrong-answer{color:#ef4444}
+.correct-answer{color:#059669}
+.back-btn{display:inline-block;margin-bottom:16px;padding:6px 14px;background:#4f46e5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.82rem;text-decoration:none}
+.back-btn:hover{background:#4338ca}
+.student-group{margin-bottom:20px;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden}
+.student-header{padding:10px 14px;background:#f1f5f9;font-weight:600;font-size:.85rem;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.student-header:hover{background:#e2e8f0}
+.student-body{padding:0}
+.student-body table{border-radius:0;box-shadow:none}
+.student-body.collapsed{display:none}
+@media(max-width:600px){
+  body{padding:10px}
+  h1{font-size:1rem}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{font-size:.7rem}
+  th,td{padding:4px 5px;max-width:100px}
+  .back-btn{font-size:.75rem;padding:5px 10px}
+}
+</style>
+</head>
+<body>
+<div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
+<a class="back-btn" href="javascript:if(window.opener)window.close();else history.back()" style="margin-bottom:0;">← 返回</a>
+<button class="back-btn" style="margin-bottom:0;background:#64748b;" onclick="render()">🔄 刷新</button>
+</div>
+<h1>📕 错题本</h1>
+<div class="summary" id="summary">共 0 道错题</div>
+<div id="recordsContainer"></div>
+<div class="empty" id="empty">暂无错题 🎉</div>
+<script>
+function getCurrentUser(){try{return JSON.parse(localStorage.getItem('math_current_user')||'null')}catch{return null}}
+function getRecords(){
+  var user=getCurrentUser();
+  if(!user)return[];
+  if(user.role==='teacher'){try{return JSON.parse(localStorage.getItem('mathRecords')||'[]')}catch{return[]}}
+  try{return JSON.parse(localStorage.getItem('records_'+user.name)||'[]')}catch{return[]}
+}
+function getAllStudentRecords(){
+  var all={};
+  for(var key in localStorage){
+    if(key.startsWith('records_')&&key!=='records_teacher'){
+      var name=key.slice(8);
+      try{
+        var rs=JSON.parse(localStorage.getItem(key)||'[]');
+        all[name]=rs;
+      }catch(e){}
+    }
+  }
+  return all;
+}
+function getUrlParam(name){var m=location.search.match(new RegExp('[?&]'+name+'=([^&]*)'));return m?decodeURIComponent(m[1]):null}
+function render(){
+  var user=getCurrentUser();
+  var container=document.getElementById('recordsContainer');
+  container.innerHTML='';
+  if(!user){document.getElementById('summary').textContent='请先登录';return}
+  var filterStudent=getUrlParam('student');
+  if(user.role==='teacher'){
+    document.title='📕 错题本'+(filterStudent?' - '+filterStudent:'');
+    var allStudents=getAllStudentRecords();
+    var studentNames=filterStudent?[filterStudent]:Object.keys(allStudents);
+    var totalWrong=0;
+    studentNames.sort().forEach(function(name){
+      var wrong=allStudents[name]?allStudents[name].filter(function(r){return !r.ok}):[];
+      if(!wrong.length)return;
+      totalWrong+=wrong.length;
+      var group=document.createElement('div');
+      group.className='student-group';
+      var header=document.createElement('div');
+      header.className='student-header';
+      header.innerHTML='👤 '+name+' <span style="color:#64748b;font-weight:400;font-size:.78rem;">'+wrong.length+' 道错题</span>';
+      header.onclick=function(){body.classList.toggle('collapsed')};
+      group.appendChild(header);
+      var body=document.createElement('div');
+      body.className='student-body';
+      var wrap=document.createElement('div');wrap.className='table-wrap';
+      var tbl=document.createElement('table');
+      tbl.innerHTML='<thead><tr><th>时间</th><th>知识点</th><th>题目</th><th>学生答案</th><th>正确答案</th></tr></thead><tbody></tbody>';
+      var tbody=tbl.querySelector('tbody');
+      wrong.slice().reverse().forEach(function(r){
+        var tr=document.createElement('tr');
+        var time=r.t?r.t.slice(0,16).replace('T',' '):'-';
+        var qtext=(r.q||'').length>60?(r.q.slice(0,60)+'…'):(r.q||'');
+        tr.innerHTML='<td>'+time+'</td><td>'+(r.kp||'')+'</td><td>'+qtext+'</td><td class="wrong-answer">'+(r.a||'')+'</td><td class="correct-answer">'+(r.ca||'')+'</td>';
+        tbody.appendChild(tr);
+      });
+      wrap.appendChild(tbl);body.appendChild(wrap);
+      group.appendChild(body);
+      container.appendChild(group);
+    });
+    document.getElementById('summary').textContent='共 '+(filterStudent?1:studentNames.length)+' 名学生, '+totalWrong+' 道错题';
+    document.getElementById('empty').style.display=totalWrong?'none':'block';
+  } else {
+    var all=getRecords();
+    var wrong=all.filter(function(r){return !r.ok});
+    document.getElementById('summary').textContent='共 '+wrong.length+' 道错题';
+    if(!wrong.length){document.getElementById('empty').style.display='block';return}
+    document.getElementById('empty').style.display='none';
+    var wrap=document.createElement('div');wrap.className='table-wrap';
+    var tbl=document.createElement('table');
+    tbl.innerHTML='<thead><tr><th>时间</th><th>知识点</th><th>题目</th><th>你的答案</th><th>正确答案</th></tr></thead><tbody></tbody>';
+    var tbody=tbl.querySelector('tbody');
+    wrong.slice().reverse().forEach(function(r){
+      var tr=document.createElement('tr');
+      var time=r.t?r.t.slice(0,16).replace('T',' '):'-';
+      var qtext=(r.q||'').length>60?(r.q.slice(0,60)+'…'):(r.q||'');
+      tr.innerHTML='<td>'+time+'</td><td>'+(r.kp||'')+'</td><td>'+qtext+'</td><td class="wrong-answer">'+(r.a||'')+'</td><td class="correct-answer">'+(r.ca||'')+'</td>';
+      tbody.appendChild(tr);
+    });
+    wrap.appendChild(tbl);container.appendChild(wrap);
+  }
+}
+render();
+window.addEventListener('storage',function(e){
+  if(e.key && (e.key.startsWith('records_')||e.key==='mathRecords'))render();
+});
+</script>
+</body>
+</html>

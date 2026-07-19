@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📝 教师推送</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f8fafc;color:#1e293b;padding:20px}
+h1{font-size:1.3rem;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card{background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:16px;overflow:hidden}
+.card-header{padding:12px 16px;background:#f1f5f9;font-weight:600;font-size:.85rem;border-bottom:1px solid #e2e8f0}
+.card-body{padding:16px}
+.empty{text-align:center;padding:60px 20px;color:#94a3b8;font-size:.9rem}
+.empty .icon{font-size:3rem;margin-bottom:12px}
+.back-btn{display:inline-block;margin-bottom:16px;padding:6px 14px;background:#4f46e5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.82rem;text-decoration:none}
+.back-btn:hover{background:#4338ca}
+.q-item{margin-bottom:16px;padding:14px;background:#fafbff;border-radius:8px;border:1px solid #eef2ff}
+.q-num{font-weight:600;color:#4f46e5;font-size:.82rem;margin-bottom:6px}
+.q-text{font-size:.9rem;line-height:1.6;margin-bottom:8px}
+.q-opts{font-size:.84rem;line-height:1.8}
+.q-opts label{display:block;padding:4px 8px;border-radius:6px;cursor:pointer}
+.q-opts label:hover{background:#eef2ff}
+.q-opts input{margin-right:6px}
+.q-input{width:100%;padding:.5rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;outline:none;resize:vertical;min-height:50px}
+.q-input:focus{border-color:#4f46e5}
+.submit-btn{display:block;width:100%;padding:.6rem;border:none;border-radius:8px;background:#4f46e5;color:#fff;font-weight:600;cursor:pointer;font-size:.9rem;margin-top:16px}
+.submit-btn:hover{background:#4338ca}
+.score-info{font-size:.82rem;color:#64748b;margin-bottom:12px}
+.result-item{padding:8px 10px;margin-bottom:6px;border-radius:6px;font-size:.84rem}
+.result-correct{background:#ecfdf5;border:1px solid #a7f3d0}
+.result-wrong{background:#fef2f2;border:1px solid #fecaca}
+.tag{display:inline-block;font-size:.7rem;padding:1px 8px;border-radius:10px;font-weight:600}
+.tag-exam{background:#eef2ff;color:#4f46e5}
+.tag-resource{background:#fef3c7;color:#d97706}
+@media(max-width:600px){
+  body{padding:10px}
+  h1{font-size:1rem}
+  .card-body{padding:10px}
+  .q-item{padding:10px}
+  .q-text{font-size:.85rem}
+  .q-opts{font-size:.8rem}
+  .back-btn{font-size:.75rem;padding:5px 10px}
+}
+</style>
+</head>
+<body>
+<div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
+<a class="back-btn" href="javascript:if(window.opener)window.close();else history.back()">← 返回</a>
+<button class="back-btn" style="background:#64748b;" onclick="render()">🔄 刷新</button>
+</div>
+<h1>📝 教师推送</h1>
+<div id="contentContainer"></div>
+<script>
+var _user=function(){try{return JSON.parse(localStorage.getItem('math_current_user')||'null')}catch(e){return null}}();
+function render(){
+  var c=document.getElementById('contentContainer');
+  if(!_user||_user.role==='teacher'){c.innerHTML='<div class="empty"><div class="icon">🔒</div>请以学生身份登录后查看</div>';return}
+  var raw=localStorage.getItem('exam_'+_user.name);
+  if(!raw){c.innerHTML='<div class="empty"><div class="icon">📭</div>暂无教师推送内容</div>';return}
+  var exam;
+  try{exam=JSON.parse(raw)}catch(e){c.innerHTML='<div class="empty">试卷数据异常</div>';return}
+  var h='<div class="card"><div class="card-header"><span class="tag tag-exam">📄 试卷</span> 共'+exam.questions.length+'题 · 满分'+exam.totalScore+'分</div>';
+  h+='<div class="card-body" id="examBody"><div class="score-info">📅 '+(exam.generated?exam.generated.slice(0,10):'-')+' 发布</div>';
+  var tn={single:'单选题',multi:'多选题',fill:'填空题',solve:'解答题'};
+  exam.questions.forEach(function(q,i){
+    h+='<div class="q-item"><div class="q-num">'+(i+1)+'. ['+(tn[q.t]||q.t)+']</div><div class="q-text">'+q.q+'</div>';
+    if(q.opts&&Array.isArray(q.opts)){
+      h+='<div class="q-opts">';
+      q.opts.forEach(function(o){h+='<label><input type="'+(q.t==='multi'?'checkbox':'radio')+'" name="q_'+i+'" value="'+o.charAt(0)+'"> '+o+'</label>'});
+      h+='</div>';
+    }else{
+      h+='<textarea class="q-input" id="input_'+i+'" placeholder="输入你的答案..."></textarea>';
+    }
+    h+='</div>';
+  });
+  h+='<button class="submit-btn" onclick="submitExam()">📤 提交答案</button></div></div>';
+  c.innerHTML=h;
+}
+function submitExam(){
+  var raw=localStorage.getItem('exam_'+_user.name);
+  if(!raw)return;
+  var exam=JSON.parse(raw);
+  var score=0,total=0,results=[];
+  exam.questions.forEach(function(q,i){
+    var ans='';
+    if(q.opts&&Array.isArray(q.opts)){
+      var c=document.querySelectorAll('input[name="q_'+i+'"]:checked');
+      ans=Array.from(c).map(function(x){return x.value}).sort().join('');
+    }else{
+      var el=document.getElementById('input_'+i);
+      if(el)ans=el.value.trim();
+    }
+    var ok=ans.toUpperCase()===q.a.toUpperCase();
+    if(ok)score+=(exam.scores[q.t]||5);
+    total+=(exam.scores[q.t]||5);
+    results.push({q:q.q,kp:q._kp||'',a:ans,ca:q.a,ok:ok,t:new Date().toISOString(),source:'exam'});
+  });
+  var key='records_'+_user.name;
+  var rs=JSON.parse(localStorage.getItem(key)||'[]');
+  rs=rs.concat(results);
+  localStorage.setItem(key,JSON.stringify(rs));
+  var master=JSON.parse(localStorage.getItem('mathRecords')||'[]');
+  master=master.concat(results);
+  localStorage.setItem('mathRecords',JSON.stringify(master));
+  var rh='<div style="text-align:center;padding:20px 0;"><div style="font-size:2.5rem;margin-bottom:8px;">'+(score/total>=0.6?'🎉':'💪')+'</div>';
+  rh+='<div style="font-size:1.1rem;font-weight:700;">得分: '+score+'/'+total+'</div>';
+  rh+='<div style="font-size:.82rem;color:#64748b;margin-top:4px;">正确率: '+Math.round(score/total*100)+'%</div></div>';
+  results.forEach(function(r,i){
+    rh+='<div class="result-item '+(r.ok?'result-correct':'result-wrong')+'">';
+    rh+='<strong>'+(i+1)+'.</strong> '+(r.q.length>60?r.q.slice(0,60)+'…':r.q);
+    rh+='<br>你的答案: '+(r.a||'(空)')+' | 正确答案: '+r.ca;
+    rh+=' <span style="'+(r.ok?'color:#059669;':'color:#ef4444;')+'font-weight:600;">'+(r.ok?'✓ 正确':'✗ 错误')+'</span></div>';
+  });
+  document.getElementById('examBody').innerHTML=rh;
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:10px 24px;border-radius:8px;font-size:.85rem;z-index:9999;background:#ecfdf5;color:#059669;border:1px solid #a7f3d0';
+  t.textContent='试卷已提交，得分 '+score+'/'+total;
+  document.body.appendChild(t);
+  setTimeout(function(){t.remove()},2500);
+}
+render();
+window.addEventListener('storage',function(e){
+  if(e.key&&e.key.startsWith('exam_'))render();
+});
+</script>
+</body>
+</html>
